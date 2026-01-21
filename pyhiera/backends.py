@@ -34,6 +34,13 @@ class PyHieraBackend:
     def init(self):
         pass
 
+    @staticmethod
+    def _expand_level(level: str, facts: dict[str, str]) -> str:
+        try:
+            return level.format(**facts)
+        except KeyError as err:
+            raise PyHieraBackendError(f"missing facts to expand level {level}: {err}")
+
     def key_data_add(
         self,
         key: str,
@@ -46,7 +53,7 @@ class PyHieraBackend:
         return self._key_data_add(
             key,
             data,
-            level.format(**facts),
+            self._expand_level(level, facts),
         )
 
     def _key_data_add(
@@ -64,7 +71,7 @@ class PyHieraBackend:
     ) -> Any:
         levels = list()
         for level in self.hierarchy:
-            levels.append(level.format(**facts))
+            levels.append(self._expand_level(level, facts))
         return self._key_data_get(key, levels)
 
     def _key_data_get(
