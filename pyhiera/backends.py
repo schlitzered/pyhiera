@@ -82,11 +82,11 @@ class PyHieraBackendYaml(PyHieraBackend):
         config: dict[str, str],
         hierarchy: list[str] = None,
     ):
+        self._base_path = None
         super().__init__(
             config=config,
             hierarchy=hierarchy,
         )
-        self._base_path = None
 
     def init(self):
         self._base_path = self.config["path"]

@@ -2,7 +2,7 @@ from typing import Any
 
 from pyhiera.errors import PyHieraError
 from pyhiera.errors import PyHieraBackendError
-from pyhiera.backends import PyHieraBackend
+from pyhiera.backends import PyHieraBackend, PyHieraBackendData
 from pyhiera.backends import PyHieraBackendYaml
 from pyhiera.key_models import PyHieraKeyBase
 from pyhiera.key_models import PyHieraKeyString
@@ -66,6 +66,46 @@ class PyHiera:
         for backend in self.backends:
             data = backend.key_data_get(key, facts)
             if data:
-                model = self.key_data_validate(key, data[0].data)
-                return model
+                return self.key_data_validate(key, data[0].data)
         raise PyHieraBackendError("No data found")
+
+    def key_data_get_merge(
+        self,
+        key: str,
+        facts: dict[str, str],
+    ) -> Any:
+        if key not in self.keys:
+            raise PyHieraError(f"Key {key} not found")
+
+        data_points = []
+        for backend in self.backends:
+            _data_points = backend.key_data_get(key, facts)
+            if _data_points:
+                for data_point in _data_points:
+                    if not isinstance(data_point.data, dict):
+                        raise PyHieraBackendError(
+                            f"Invalid data for key {key}, expected dict, got: {data_point.data}"
+                        )
+                    data_points.append(data_point)
+
+        if not data_points:
+            raise PyHieraBackendError("No data found")
+
+        merged_data = {}
+        for data_point in reversed(data_points):
+            merged_data = self._key_data_get_merge(data_point.data, merged_data)
+
+        return self.key_data_validate(key, merged_data)
+
+    def _key_data_get_merge(self, update, result):
+        for key, value in update.items():
+            if isinstance(value, dict):
+                self._key_data_get_merge(value, result.setdefault(key, {}))
+            elif isinstance(value, list):
+                if key in result:
+                    result[key].extend(value)
+                else:
+                    result[key] = value
+            else:
+                result[key] = value
+        return result

@@ -13,6 +13,7 @@ hierarchy = [
 
 # Base path for data
 base_path = os.path.join(os.getcwd(), "test_data")
+print(f"Base path: {base_path}")
 
 if not os.path.exists(base_path):
     os.makedirs(base_path)
@@ -44,19 +45,19 @@ backend.key_data_add(
 
 backend.key_data_add(
     key="complex",
-    data={"a": "common", "b": {"blarg": "1"}},
+    data={"a": "common", "b": {"blarg": "1", "other": "val", "blub": ["a", "b", "c"]}},
     level="common.yaml",
     facts={},
 )
 backend.key_data_add(
     key="complex",
-    data={"a": "dev", "b": {"blarg": "2"}},
+    data={"b": {"blarg": "2", "blub": ["c", "d"]}},
     level="stage/{stage}.yaml",
     facts={"stage": "dev"},
 )
 backend.key_data_add(
     key="complex",
-    data={"a": "prod", "b": {"blarg": "3"}},
+    data={"a": "prod", "b": {"blarg": "3", "blub": ["c", "d", "e"]}},
     level="stage/{stage}.yaml",
     facts={"stage": "prod"},
 )
@@ -88,5 +89,19 @@ pyhiera = PyHiera(backends=[backend])
 pyhiera.key_add(key="db_host", hiera_key="SimpleString")
 pyhiera.key_add(key="complex", hiera_key="Complex")
 
-print(pyhiera.key_data_get("db_host", {"stage": "blarg"}))
-print(pyhiera.key_data_get("complex", {"stage": "blarg"}))
+print("\nPyHiera key_data_get:")
+print(f"db_host (stage: blarg): {pyhiera.key_data_get('db_host', {'stage': 'blarg'})}")
+print(f"complex (stage: blarg): {pyhiera.key_data_get('complex', {'stage': 'blarg'})}")
+print(f"db_host (stage: dev): {pyhiera.key_data_get('db_host', {'stage': 'dev'})}")
+print(f"complex (stage: dev): {pyhiera.key_data_get('complex', {'stage': 'dev'})}")
+
+print("\nPyHiera key_data_get_merge:")
+print(
+    f"complex (stage: dev): {pyhiera.key_data_get_merge('complex', {'stage': 'dev'})}"
+)
+print(
+    f"complex (stage: prod): {pyhiera.key_data_get_merge('complex', {'stage': 'prod'})}"
+)
+print(
+    f"complex (stage: assdasd): {pyhiera.key_data_get_merge('complex', {'stage': 'assdasd'})}"
+)

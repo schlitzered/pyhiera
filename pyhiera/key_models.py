@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Optional
 from pydantic import BaseModel
 
 
@@ -68,12 +68,14 @@ class PyHieraKeyBool(PyHieraKeyBase):
 
 
 class PyHieraKeyModelComplexLevelB(BaseModel):
-    blarg: str
+    blarg: Optional[str] = None
+    other: Optional[str] = None
+    blub: Optional[set[str]] = None
 
 
 class PyHieraKeyModelComplexLevel(BaseModel):
-    a: str
-    b: PyHieraKeyModelComplexLevelB
+    a: Optional[str] = None
+    b: Optional[PyHieraKeyModelComplexLevelB] = None
 
 
 class PyHieraKeyModelComplex(PyHieraKeyModelBase):
