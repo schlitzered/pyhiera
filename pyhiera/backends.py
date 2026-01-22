@@ -153,6 +153,8 @@ class PyHieraBackendYaml(PyHieraBackend):
                             data=data[key],
                         ),
                     )
-            except FileNotFoundError:
+            except OSError:
+                pass
+            except yaml.YAMLError:
                 pass
         return result
