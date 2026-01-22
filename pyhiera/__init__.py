@@ -96,7 +96,6 @@ class PyHiera:
 
         merged_data = {}
         for data_point in reversed(data_points):
-            print(f"Merging data from {data_point.level}: {data_point.data}")
             merged_data = self._key_data_get_merge(data_point.data, merged_data)
 
         return self.key_data_validate(key, merged_data)
