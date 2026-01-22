@@ -1,19 +1,11 @@
 import os
 from typing import Any
 
-from pydantic import BaseModel
-
 import yaml
 
 from pyhiera.errors import PyHieraBackendError
-
-
-class PyHieraBackendData(BaseModel):
-    identifier: str
-    priority: int
-    level: str
-    key: str
-    data: Any
+from pyhiera.models import PyHieraDataBase
+from pyhiera.models import PyHieraBackendData
 
 
 class PyHieraBackend:
@@ -59,7 +51,7 @@ class PyHieraBackend:
     def key_data_add(
         self,
         key: str,
-        data: Any,
+        data: PyHieraDataBase,
         level: str,
         facts: dict[str, str],
     ):
@@ -74,7 +66,7 @@ class PyHieraBackend:
     def _key_data_add(
         self,
         key: str,
-        data: Any,
+        data: PyHieraDataBase,
         level: str,
     ):
         raise NotImplementedError
@@ -124,7 +116,7 @@ class PyHieraBackendYaml(PyHieraBackend):
     def _key_data_add(
         self,
         key: str,
-        data: Any,
+        data: PyHieraDataBase,
         level: str,
     ):
         try:
@@ -135,7 +127,8 @@ class PyHieraBackendYaml(PyHieraBackend):
                 content = yaml.safe_load(f) or {}
         except FileNotFoundError:
             content = dict()
-        content[key] = data
+        print(data)
+        content[key] = data.model_dump(exclude_none=True)["data"]
         with open(f"{self.base_path}/{level}", "w") as f:
             yaml.dump(content, f)
 

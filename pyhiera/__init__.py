@@ -5,13 +5,13 @@ from pyhiera.errors import PyHieraError
 from pyhiera.errors import PyHieraBackendError
 from pyhiera.backends import PyHieraBackend, PyHieraBackendData
 from pyhiera.backends import PyHieraBackendYaml
-from pyhiera.key_models import PyHieraKeyBase
-from pyhiera.key_models import PyHieraKeyString
-from pyhiera.key_models import PyHieraKeyInt
-from pyhiera.key_models import PyHieraKeyFloat
-from pyhiera.key_models import PyHieraKeyBool
-from pyhiera.key_models import PyHieraKeyComplex
-from pyhiera.key_models import PyHieraKeyModelBase
+from pyhiera.keys import PyHieraKeyBase
+from pyhiera.keys import PyHieraKeyString
+from pyhiera.keys import PyHieraKeyInt
+from pyhiera.keys import PyHieraKeyFloat
+from pyhiera.keys import PyHieraKeyBool
+from pyhiera.keys import PyHieraKeyComplex
+from pyhiera.keys import PyHieraDataBase
 
 
 class PyHiera:
@@ -68,8 +68,11 @@ class PyHiera:
         del self._keys[key]
 
     def key_data_validate(
-        self, key: str, data: dict, sources: Optional[list[PyHieraBackendData]] = None
-    ) -> PyHieraKeyModelBase:
+        self,
+        key: str,
+        data: dict,
+        sources: Optional[list[PyHieraBackendData]] = None,
+    ) -> PyHieraDataBase:
         try:
             if sources:
                 return self.keys[key].model(data=data, sources=sources)
@@ -80,12 +83,25 @@ class PyHiera:
         except ValueError as err:
             raise PyHieraError(f"Invalid data for key {key}: {err}")
 
+    def key_data_add(
+        self,
+        backend_identifier: str,
+        key: str,
+        data: Any,
+        level: str,
+        facts: dict[str, str],
+    ):
+        if backend_identifier not in self._backends_dict:
+            raise PyHieraError(f"Backend {backend_identifier} not found")
+        data = self.key_data_validate(key, data)
+        self._backends_dict[backend_identifier].key_data_add(key, data, level, facts)
+
     def key_data_get(
         self,
         key: str,
         facts: dict[str, str],
         include_sources: bool = True,
-    ) -> Any:
+    ) -> PyHieraDataBase:
         if key not in self.keys:
             raise PyHieraError(f"Key {key} not found")
         for backend in self._backends_list:
@@ -102,7 +118,7 @@ class PyHiera:
         key: str,
         facts: dict[str, str],
         include_sources: bool = True,
-    ) -> Any:
+    ) -> PyHieraDataBase:
         if key not in self.keys:
             raise PyHieraError(f"Key {key} not found")
 
