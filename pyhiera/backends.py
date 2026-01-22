@@ -14,7 +14,7 @@ class PyHieraBackend:
         config: dict[str, str],
         identifier: str,
         priority: int,
-        hierarchy: list[str] = None,
+        hierarchy: list[str],
     ):
         self._config = config
         self._hierarchy = hierarchy
@@ -96,7 +96,7 @@ class PyHieraBackendYaml(PyHieraBackend):
         config: dict[str, str],
         identifier: str,
         priority: int,
-        hierarchy: list[str] = None,
+        hierarchy: list[str],
     ):
         self._base_path = None
         super().__init__(
@@ -127,7 +127,6 @@ class PyHieraBackendYaml(PyHieraBackend):
                 content = yaml.safe_load(f) or {}
         except FileNotFoundError:
             content = dict()
-        print(data)
         content[key] = data.model_dump(exclude_none=True)["data"]
         with open(f"{self.base_path}/{level}", "w") as f:
             yaml.dump(content, f)
@@ -135,13 +134,17 @@ class PyHieraBackendYaml(PyHieraBackend):
     def _key_data_get(
         self,
         key: str,
-        levels: dict[str, Any],
+        levels: list[str],
     ) -> list[PyHieraBackendData]:
         result = list()
         for level in levels:
             try:
                 with open(f"{self.base_path}/{level}", "r") as f:
                     data = yaml.safe_load(f)
+                    if not isinstance(data, dict):
+                        continue
+                    if not key in data:
+                        continue
                     result.append(
                         PyHieraBackendData(
                             identifier=self.identifier,
@@ -152,7 +155,5 @@ class PyHieraBackendYaml(PyHieraBackend):
                         ),
                     )
             except FileNotFoundError:
-                pass
-            except KeyError:
                 pass
         return result

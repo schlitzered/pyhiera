@@ -3,7 +3,7 @@ from typing import Optional
 
 from pyhiera.errors import PyHieraError
 from pyhiera.errors import PyHieraBackendError
-from pyhiera.backends import PyHieraBackend, PyHieraBackendData
+from pyhiera.backends import PyHieraBackend
 from pyhiera.backends import PyHieraBackendYaml
 from pyhiera.keys import PyHieraKeyBase
 from pyhiera.keys import PyHieraKeyString
@@ -12,6 +12,7 @@ from pyhiera.keys import PyHieraKeyFloat
 from pyhiera.keys import PyHieraKeyBool
 from pyhiera.keys import PyHieraKeyComplex
 from pyhiera.keys import PyHieraDataBase
+from pyhiera.models import PyHieraBackendData
 
 
 class PyHiera:
@@ -65,7 +66,10 @@ class PyHiera:
         self._keys[key] = self.key_models[hiera_key]()
 
     def key_delete(self, key: str):
-        del self._keys[key]
+        try:
+            del self._keys[key]
+        except KeyError:
+            raise PyHieraError(f"Key {key} not found")
 
     def key_data_validate(
         self,
@@ -144,9 +148,7 @@ class PyHiera:
             merged_data = self._key_data_get_merge(data_point.data, merged_data)
 
         if include_sources:
-            return self.key_data_validate(
-                key, merged_data, sources=data_points
-            ).model_dump()
+            return self.key_data_validate(key, merged_data, sources=data_points)
         else:
             return self.key_data_validate(key, merged_data)
 
