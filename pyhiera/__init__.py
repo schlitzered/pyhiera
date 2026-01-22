@@ -86,6 +86,9 @@ class PyHiera:
                         raise PyHieraBackendError(
                             f"Invalid data for key {key}, expected dict, got: {data_point.data}"
                         )
+                    data_point.data = self.key_data_validate(
+                        key, data_point.data
+                    ).model_dump()["data"]
                     data_points.append(data_point)
 
         if not data_points:
