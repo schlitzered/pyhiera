@@ -19,7 +19,12 @@ if not os.path.exists(base_path):
     os.makedirs(base_path)
 
 # Initialize backend
-backend = PyHieraBackendYaml(config={"path": base_path}, hierarchy=hierarchy)
+backend = PyHieraBackendYaml(
+    identifier="test_yaml",
+    priority=1,
+    config={"path": base_path},
+    hierarchy=hierarchy,
+)
 
 # Insert test data
 print("Inserting test data...")
@@ -85,7 +90,8 @@ def get_and_print(key, facts):
 
 # test backend via PyHiera
 
-pyhiera = PyHiera(backends=[backend])
+pyhiera = PyHiera()
+pyhiera.backend_add(backend)
 pyhiera.key_add(key="db_host", hiera_key="SimpleString")
 pyhiera.key_add(key="complex", hiera_key="Complex")
 

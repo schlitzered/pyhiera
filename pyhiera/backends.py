@@ -9,7 +9,10 @@ from pyhiera.errors import PyHieraBackendError
 
 
 class PyHieraBackendData(BaseModel):
+    identifier: str
+    priority: int
     level: str
+    key: str
     data: Any
 
 
@@ -17,10 +20,14 @@ class PyHieraBackend:
     def __init__(
         self,
         config: dict[str, str],
+        identifier: str,
+        priority: int,
         hierarchy: list[str] = None,
     ):
         self._config = config
         self._hierarchy = hierarchy
+        self._identifier = identifier
+        self._priority = priority
         self.init()
 
     @property
@@ -30,6 +37,14 @@ class PyHieraBackend:
     @property
     def hierarchy(self) -> list[str]:
         return self._hierarchy
+
+    @property
+    def identifier(self):
+        return self._identifier
+
+    @property
+    def priority(self):
+        return self._priority
 
     def init(self):
         pass
@@ -87,11 +102,15 @@ class PyHieraBackendYaml(PyHieraBackend):
     def __init__(
         self,
         config: dict[str, str],
+        identifier: str,
+        priority: int,
         hierarchy: list[str] = None,
     ):
         self._base_path = None
         super().__init__(
             config=config,
+            identifier=identifier,
+            priority=priority,
             hierarchy=hierarchy,
         )
 
@@ -130,7 +149,15 @@ class PyHieraBackendYaml(PyHieraBackend):
             try:
                 with open(f"{self.base_path}/{level}", "r") as f:
                     data = yaml.safe_load(f)
-                    result.append(PyHieraBackendData(level=level, data=data[key]))
+                    result.append(
+                        PyHieraBackendData(
+                            identifier=self.identifier,
+                            priority=self.priority,
+                            key=key,
+                            level=level,
+                            data=data[key],
+                        ),
+                    )
             except FileNotFoundError:
                 pass
             except KeyError:

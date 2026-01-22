@@ -1,8 +1,11 @@
 from typing import Any, Optional
 from pydantic import BaseModel
 
+from pyhiera.backends import PyHieraBackendData
+
 
 class PyHieraKeyModelBase(BaseModel):
+    sources: Optional[list[PyHieraBackendData]] = None
     data: Any
 
 
