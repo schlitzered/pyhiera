@@ -90,7 +90,6 @@ class PyHieraBackend:
 
 
 class PyHieraBackendYaml(PyHieraBackend):
-
     def __init__(
         self,
         config: dict[str, str],
