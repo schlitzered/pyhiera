@@ -88,7 +88,7 @@ class PyHiera:
                         )
                     data_point.data = self.key_data_validate(
                         key, data_point.data
-                    ).model_dump()["data"]
+                    ).model_dump(exclude_none=True)["data"]
                     data_points.append(data_point)
 
         if not data_points:
@@ -96,6 +96,7 @@ class PyHiera:
 
         merged_data = {}
         for data_point in reversed(data_points):
+            print(f"Merging data from {data_point.level}: {data_point.data}")
             merged_data = self._key_data_get_merge(data_point.data, merged_data)
 
         return self.key_data_validate(key, merged_data)
@@ -107,6 +108,11 @@ class PyHiera:
             elif isinstance(value, list):
                 if key in result:
                     result[key].extend(value)
+                else:
+                    result[key] = value
+            elif isinstance(value, set):
+                if key in result:
+                    result[key].update(value)
                 else:
                     result[key] = value
             else:
