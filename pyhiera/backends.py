@@ -184,11 +184,13 @@ class PyHieraBackendYamlAsync(PyHieraBackendAsync):
         try:
             dir_name = os.path.dirname(file_name)
             if not await aiofiles.os.path.exists(dir_name):
-                await aiofiles.os.makedirs(dir_name)
+                await aiofiles.os.makedirs(dir_name, exist_ok=True)
             async with aiofiles.open(file_name, "r") as f:
                 content = yaml.safe_load(await f.read()) or {}
         except FileNotFoundError:
             content = dict()
+        if not isinstance(content, dict):
+            content = {}
         content[key] = data.model_dump(exclude_none=True)["data"]
         async with aiofiles.open(file_name, "w") as f:
             await f.write(yaml.dump(content))
@@ -256,11 +258,13 @@ class PyHieraBackendYamlSync(PyHieraBackendSync):
         file_name = f"{self.base_path}/{level}"
         try:
             if not os.path.exists(os.path.dirname(file_name)):
-                os.makedirs(os.path.dirname(file_name))
+                os.makedirs(os.path.dirname(file_name), exist_ok=True)
             with open(f"{self.base_path}/{level}", "r") as f:
                 content = yaml.safe_load(f) or {}
         except FileNotFoundError:
             content = dict()
+        if not isinstance(content, dict):
+            content = {}
         content[key] = data.model_dump(exclude_none=True)["data"]
         with open(file_name, "w") as f:
             yaml.dump(content, f)
