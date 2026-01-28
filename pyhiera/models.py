@@ -2,7 +2,7 @@ from typing import Any, Optional
 from pydantic import BaseModel
 
 
-class PyHieraBackendData(BaseModel):
+class PyHieraModelBackendData(BaseModel):
     identifier: str
     priority: int
     level: str
@@ -10,37 +10,22 @@ class PyHieraBackendData(BaseModel):
     data: Any
 
 
-class PyHieraDataBase(BaseModel):
-    sources: Optional[list[PyHieraBackendData]] = None
+class PyHieraModelDataBase(BaseModel):
+    sources: Optional[list[PyHieraModelBackendData]] = None
     data: Any
 
 
-class PyHieraDataString(PyHieraDataBase):
-    data: str
-
-
-class PyHieraDataInt(PyHieraDataBase):
-    data: int
-
-
-class PyHieraDataFloat(PyHieraDataBase):
-    data: float
-
-
-class PyHieraDataBool(PyHieraDataBase):
+class PyHieraModelDataBool(PyHieraModelDataBase):
     data: bool
 
 
-class PyHieraKeyDataComplexLevelB(BaseModel):
-    blarg: Optional[str] = None
-    other: Optional[str] = None
-    blub: Optional[set[str]] = None
+class PyHieraModelDataString(PyHieraModelDataBase):
+    data: str
 
 
-class PyHieraKeyDataComplexLevel(BaseModel):
-    a: Optional[str] = None
-    b: Optional[PyHieraKeyDataComplexLevelB] = None
+class PyHieraModelDataInt(PyHieraModelDataBase):
+    data: int
 
 
-class PyHieraKeyDataComplex(PyHieraDataBase):
-    data: PyHieraKeyDataComplexLevel
+class PyHieraModelDataFloat(PyHieraModelDataBase):
+    data: float

@@ -1,6 +1,33 @@
 import os
-from pyhiera import PyHiera
-from pyhiera import PyHieraBackendYaml
+from pyhiera import PyHieraModelDataBase
+from pyhiera import PyHieraKeyBase
+from pyhiera import PyHieraSync
+from pyhiera import PyHieraBackendYamlSync
+from pydantic import BaseModel
+from typing import Optional
+
+
+class PyHieraKeyDataComplexLevelB(BaseModel):
+    blarg: Optional[str] = None
+    other: Optional[str] = None
+    blub: Optional[set[str]] = None
+
+
+class PyHieraKeyDataComplexLevel(BaseModel):
+    a: Optional[str] = None
+    b: Optional[PyHieraKeyDataComplexLevelB] = None
+
+
+class PyHieraKeyDataComplex(PyHieraModelDataBase):
+    data: PyHieraKeyDataComplexLevel
+
+
+class PyHieraKeyComplex(PyHieraKeyBase):
+    def __init__(self):
+        super().__init__()
+        self._description = "complex data"
+        self._model = PyHieraKeyDataComplex
+
 
 # Hierarchy levels
 # 1. stage/{stage}/.yaml
@@ -19,7 +46,7 @@ if not os.path.exists(base_path):
     os.makedirs(base_path)
 
 # Initialize backend
-backend = PyHieraBackendYaml(
+backend = PyHieraBackendYamlSync(
     identifier="test_yaml",
     priority=1,
     config={"path": base_path},
@@ -27,7 +54,8 @@ backend = PyHieraBackendYaml(
 )
 
 
-pyhiera = PyHiera()
+pyhiera = PyHieraSync()
+pyhiera.key_model_add(key="Complex", model=PyHieraKeyComplex)
 pyhiera.backend_add(backend)
 pyhiera.key_add(key="db_host", hiera_key="SimpleString")
 pyhiera.key_add(key="complex", hiera_key="Complex")
