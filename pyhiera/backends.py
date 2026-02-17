@@ -1,3 +1,4 @@
+import logging
 import os
 from typing import Any
 
@@ -8,6 +9,8 @@ import yaml
 from pyhiera.errors import PyHieraBackendError
 from pyhiera.models import PyHieraModelBackendData
 from pyhiera.models import PyHieraModelDataBase
+
+logger = logging.getLogger(__name__)
 
 
 class PyHieraBackendBase:
@@ -180,7 +183,7 @@ class PyHieraBackendYamlAsync(PyHieraBackendAsync):
         data: PyHieraModelDataBase,
         level: str,
     ):
-        file_name = f"{self.base_path}/{level}"
+        file_name = os.path.join(self.base_path, level)
         try:
             dir_name = os.path.dirname(file_name)
             if not await aiofiles.os.path.exists(dir_name):
@@ -191,9 +194,14 @@ class PyHieraBackendYamlAsync(PyHieraBackendAsync):
             content = dict()
         if not isinstance(content, dict):
             content = {}
-        content[key] = data.model_dump(exclude_none=True)["data"]
+        # Serialize data: if it's a Pydantic model, dump it; otherwise use directly
+        if hasattr(data.data, 'model_dump'):
+            content[key] = data.data.model_dump()
+        else:
+            content[key] = data.data
         async with aiofiles.open(file_name, "w") as f:
             await f.write(yaml.dump(content))
+        logger.debug(f"Added data for key '{key}' to {file_name}")
 
     async def _key_data_get(
         self,
@@ -203,7 +211,7 @@ class PyHieraBackendYamlAsync(PyHieraBackendAsync):
         result = list()
         for level in levels:
             try:
-                file_name = f"{self.base_path}/{level}"
+                file_name = os.path.join(self.base_path, level)
                 async with aiofiles.open(file_name, "r") as f:
                     data = yaml.safe_load(await f.read())
                 if not isinstance(data, dict):
@@ -219,10 +227,11 @@ class PyHieraBackendYamlAsync(PyHieraBackendAsync):
                         data=data[key],
                     ),
                 )
-            except OSError:
-                pass
-            except yaml.YAMLError:
-                pass
+                logger.debug(f"Found key '{key}' in {file_name}")
+            except OSError as e:
+                logger.debug(f"Failed to read {file_name}: {e}")
+            except yaml.YAMLError as e:
+                logger.warning(f"Invalid YAML in {file_name}: {e}")
         return result
 
 
@@ -255,19 +264,25 @@ class PyHieraBackendYamlSync(PyHieraBackendSync):
         data: PyHieraModelDataBase,
         level: str,
     ):
-        file_name = f"{self.base_path}/{level}"
+        file_name = os.path.join(self.base_path, level)
         try:
-            if not os.path.exists(os.path.dirname(file_name)):
-                os.makedirs(os.path.dirname(file_name), exist_ok=True)
-            with open(f"{self.base_path}/{level}", "r") as f:
+            dir_name = os.path.dirname(file_name)
+            if not os.path.exists(dir_name):
+                os.makedirs(dir_name, exist_ok=True)
+            with open(file_name, "r") as f:
                 content = yaml.safe_load(f) or {}
         except FileNotFoundError:
             content = dict()
         if not isinstance(content, dict):
             content = {}
-        content[key] = data.model_dump(exclude_none=True)["data"]
+        # Serialize data: if it's a Pydantic model, dump it; otherwise use directly
+        if hasattr(data.data, 'model_dump'):
+            content[key] = data.data.model_dump()
+        else:
+            content[key] = data.data
         with open(file_name, "w") as f:
             yaml.dump(content, f)
+        logger.debug(f"Added data for key '{key}' to {file_name}")
 
     def _key_data_get(
         self,
@@ -277,7 +292,8 @@ class PyHieraBackendYamlSync(PyHieraBackendSync):
         result = list()
         for level in levels:
             try:
-                with open(f"{self.base_path}/{level}", "r") as f:
+                file_name = os.path.join(self.base_path, level)
+                with open(file_name, "r") as f:
                     data = yaml.safe_load(f)
                     if not isinstance(data, dict):
                         continue
@@ -292,8 +308,9 @@ class PyHieraBackendYamlSync(PyHieraBackendSync):
                             data=data[key],
                         ),
                     )
-            except OSError:
-                pass
-            except yaml.YAMLError:
-                pass
+                    logger.debug(f"Found key '{key}' in {file_name}")
+            except OSError as e:
+                logger.debug(f"Failed to read {file_name}: {e}")
+            except yaml.YAMLError as e:
+                logger.warning(f"Invalid YAML in {file_name}: {e}")
         return result

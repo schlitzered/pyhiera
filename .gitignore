@@ -1,4 +1,7 @@
 .idea
 dist
+venv
+.venv
+.coverage
 test_data
 *.pyc
